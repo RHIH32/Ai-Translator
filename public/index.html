@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Translator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .pulse { animation: pulse-animation 1.5s infinite; }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        select {
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        #history-panel, #sidebar { transition: transform 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-5xl bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 relative overflow-hidden">
+        <!-- Header with Menu Button -->
+        <div class="absolute top-4 left-6 z-10">
+            <button id="menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-lg flex items-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </div>
+
+        <header class="text-center mb-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">AI Multi-Language Translator</h2>
+            <p class="text-gray-400 mt-2">बोलकर या लिखकर अनुवाद करें</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row items-start justify-center gap-4 md:gap-6">
+            <!-- Source Panel -->
+            <div class="bg-gray-700 p-6 rounded-xl w-full">
+                <select id="source-lang-select" class="w-full bg-gray-800 border-2 border-gray-600 rounded-lg p-3 text-white font-semibold text-xl mb-4"></select>
+                <div class="flex space-x-2 mb-4">
+                    <button id="start-recognition" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3_0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                        <span id="recognition-btn-text">Speak</span>
+                    </button>
+                    <button id="translate-text-btn" class="w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Translate Text
+                    </button>
+                </div>
+                <label for="source-text" class="block text-sm font-medium text-gray-400 mb-1">Original Text:</label>
+                <textarea id="source-text" rows="4" class="w-full bg-gray-800 border-2 border-gray-600 rounded-lg p-3 text-gray-200" placeholder="Type or speak here..."></textarea>
+            </div>
+
+            <!-- Swap Button -->
+            <div class="my-2 md:mt-24">
+                <button id="swap-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-3 rounded-full transform hover:scale-110 hover:rotate-180">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                </button>
+            </div>
+
+            <!-- Target Panel -->
+            <div class="bg-gray-700 p-6 rounded-xl w-full">
+                <select id="target-lang-select" class="w-full bg-gray-800 border-2 border-gray-600 rounded-lg p-3 text-white font-semibold text-xl mb-4"></select>
+                <button id="speak-translation" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center" disabled>
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.636 5.636a9 9 0 0112.728 0M18.364 18.364A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                    Listen
+                </button>
+                 <div class="flex items-center justify-center mt-4 space-x-2">
+                    <input type="checkbox" id="auto-speak-toggle" class="w-4 h-4 text-purple-600 bg-gray-900 border-gray-600 rounded focus:ring-purple-500 cursor-pointer">
+                    <label for="auto-speak-toggle" class="text-gray-400 cursor-pointer">Auto-Speak</label>
+                </div>
+                 <div class="mt-2">
+                    <label for="target-text" class="block text-sm font-medium text-gray-400 mb-1">Translated Text:</label>
+                    <div class="relative">
+                        <textarea id="target-text" rows="3" class="w-full bg-gray-800 border-2 border-gray-600 rounded-lg p-3 text-gray-200" readonly></textarea>
+                        <div id="loader" class="absolute inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center rounded-lg hidden">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="status" class="text-center mt-6 text-gray-500 text-sm">Status: Idle</div>
+        
+        <footer class="border-t border-gray-700 mt-6 pt-4 flex flex-col md:flex-row items-center justify-between">
+            <p class="text-gray-500 text-sm">Made with <span class="text-red-500">&hearts;</span> by code-Ravi</p>
+            <div class="flex space-x-4 mt-4 md:mt-0">
+                <a href="https://github.com/RHIH32" class="text-gray-500 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.168 6.839 9.492.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.942.359.308.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd" /></svg>
+                </a>
+                <a href="#" class="text-gray-500 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.389 0-1.601 1.086-1.601 2.206v4.248H8.014V8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.71zM4.98 7.414a2.482 2.482 0 11-.004-4.964 2.482 2.482 0 01.004 4.964zM6.274 16.338H3.686V8.59h2.588v7.748zM17.638 2H6.362A4.362 4.362 0 002 6.362v11.276A4.362 4.362 0 006.362 22h11.276A4.362 4.362 0 0022 17.638V6.362A4.362 4.362 0 0017.638 2z"></path></svg>
+                </a>
+                 <a href="#" class="text-gray-500 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.71v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path></svg>
+                </a>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-gray-800 shadow-2xl p-6 transform -translate-x-full z-30">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold">Menu</h2>
+            <button id="close-sidebar-btn" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+        </div>
+        <nav>
+            <a href="#" id="history-link" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 flex items-center">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                History
+            </a>
+        </nav>
+    </div>
+
+    <!-- History Panel -->
+    <div id="history-panel" class="fixed top-0 right-0 h-full w-full md:w-1/3 bg-gray-800 shadow-2xl p-6 transform translate-x-full z-20">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">History</h2>
+            <button id="close-history-btn" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+        </div>
+        <button id="clear-history-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg mb-4">Clear History</button>
+        <div id="history-content" class="h-full overflow-y-auto pb-20"></div>
+    </div>
+
+    <script>
+        
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const synthesis = window.speechSynthesis;
+        const statusDiv = document.getElementById('status');
+        
+        if (!SpeechRecognition || !synthesis) {
+            statusDiv.textContent = "Browser not supported. Please use Chrome or Edge.";
+            document.getElementById('start-recognition').disabled = true;
+        }
+
+        const languages = [ { code: 'hi-IN', name: 'Hindi' }, { code: 'en-US', name: 'English' }, { code: 'te-IN', name: 'Telugu' }, { code: 'kn-IN', name: 'Kannada' }, { code: 'es-ES', name: 'Spanish' }, { code: 'fr-FR', name: 'French' }, { code: 'zh-CN', name: 'Mandarin Chinese' }, { code: 'bn-IN', name: 'Bengali' }, { code: 'ru-RU', name: 'Russian' }, { code: 'pt-PT', name: 'Portuguese' }];
+        const startRecognitionBtn = document.getElementById('start-recognition');
+        const recognitionBtnText = document.getElementById('recognition-btn-text');
+        const sourceText = document.getElementById('source-text');
+        const targetText = document.getElementById('target-text');
+        const speakTranslationBtn = document.getElementById('speak-translation');
+        const loader = document.getElementById('loader');
+        const swapBtn = document.getElementById('swap-btn');
+        const sourceLangSelect = document.getElementById('source-lang-select');
+        const targetLangSelect = document.getElementById('target-lang-select');
+        const translateTextBtn = document.getElementById('translate-text-btn');
+        
+        const historyPanel = document.getElementById('history-panel');
+        const closeHistoryBtn = document.getElementById('close-history-btn');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
+        const historyContent = document.getElementById('history-content');
+        
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const historyLink = document.getElementById('history-link');
+        
+        const autoSpeakToggle = document.getElementById('auto-speak-toggle');
+
+        const recognition = new SpeechRecognition();
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        function populateDropdowns() {
+            languages.forEach(lang => {
+                sourceLangSelect.add(new Option(lang.name, lang.code));
+                targetLangSelect.add(new Option(lang.name, lang.code));
+            });
+            sourceLangSelect.value = 'hi-IN';
+            targetLangSelect.value = 'en-US';
+        }
+
+        function speakText(text, langCode) {
+            if (text && !synthesis.speaking) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = langCode;
+                synthesis.speak(utterance);
+            }
+        }
+
+        // --- YAHAN BADLAV KIYA GAYA HAI ---
+        async function performTranslation(textToTranslate) {
+            if (!textToTranslate.trim()) {
+                statusDiv.textContent = "Please enter text to translate.";
+                return;
+            }
+            statusDiv.textContent = 'Translating...';
+            targetText.value = '';
+            loader.classList.remove('hidden');
+            speakTranslationBtn.disabled = true;
+            
+            const sourceLangName = languages.find(l => l.code === sourceLangSelect.value).name;
+            const targetLangName = languages.find(l => l.code === targetLangSelect.value).name;
+            
+            try {
+                // Ab hum apne server ko call karenge, Google ko nahin
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textToTranslate,
+                        sourceLang: sourceLangName,
+                        targetLang: targetLangName
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Translation request failed');
+                }
+
+                const data = await response.json();
+                const translated = data.translation;
+
+                targetText.value = translated;
+                speakTranslationBtn.disabled = false;
+                statusDiv.textContent = 'Translation complete.';
+                saveToHistory(textToTranslate, translated, sourceLangName, targetLangName);
+                
+                if (autoSpeakToggle.checked) {
+                    speakText(translated, targetLangSelect.value);
+                }
+
+            } catch (error) {
+                targetText.value = 'Translation failed.';
+                statusDiv.textContent = 'Error.';
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        startRecognitionBtn.addEventListener('click', () => recognition.start());
+        recognition.onstart = () => {
+            recognition.lang = sourceLangSelect.value;
+            statusDiv.textContent = 'Listening...';
+            recognitionBtnText.textContent = 'Listening...';
+            startRecognitionBtn.classList.add('bg-red-600', 'pulse');
+        };
+        recognition.onresult = (event) => {
+            const speechResult = event.results[0][0].transcript.trim();
+            sourceText.value = speechResult;
+            if (speechResult) performTranslation(speechResult);
+        };
+        recognition.onend = () => {
+            statusDiv.textContent = 'Status: Idle';
+            recognitionBtnText.textContent = 'Speak';
+            startRecognitionBtn.classList.remove('bg-red-600', 'pulse');
+        };
+        recognition.onerror = (event) => {
+            statusDiv.textContent = 'Error: ' + (event.error === 'not-allowed' ? 'Microphone access denied.' : event.error);
+            recognition.onend();
+        };
+
+        translateTextBtn.addEventListener('click', () => {
+            performTranslation(sourceText.value);
+        });
+
+        speakTranslationBtn.addEventListener('click', () => {
+            speakText(targetText.value, targetLangSelect.value);
+        });
+        swapBtn.addEventListener('click', () => {
+            [sourceLangSelect.value, targetLangSelect.value] = [targetLangSelect.value, sourceLangSelect.value];
+            [sourceText.value, targetText.value] = [targetText.value, sourceText.value];
+        });
+
+        // --- History Functions ---
+        function getHistory() { return JSON.parse(localStorage.getItem('translationHistory')) || []; }
+        function saveToHistory(original, translated, from, to) {
+            const history = getHistory();
+            history.unshift({ original, translated, from, to, date: new Date().toISOString() });
+            if (history.length > 50) history.pop();
+            localStorage.setItem('translationHistory', JSON.stringify(history));
+            renderHistory();
+        }
+        function renderHistory() {
+            const history = getHistory();
+            historyContent.innerHTML = history.length === 0 ? '<p class="text-gray-500">No history yet.</p>' : history.map(item => `
+                <div class="bg-gray-700 p-3 rounded-lg mb-3">
+                    <p class="text-sm text-gray-400">${item.from} → ${item.to}</p>
+                    <p class="font-semibold">${item.original}</p>
+                    <p>${item.translated}</p>
+                </div>`).join('');
+        }
+        
+        closeHistoryBtn.addEventListener('click', () => historyPanel.classList.add('translate-x-full'));
+        clearHistoryBtn.addEventListener('click', () => {
+            localStorage.removeItem('translationHistory');
+            renderHistory();
+        });
+        
+        // --- Sidebar Functions ---
+        menuBtn.addEventListener('click', () => sidebar.classList.remove('-translate-x-full'));
+        closeSidebarBtn.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
+        
+        historyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            sidebar.classList.add('-translate-x-full');
+            historyPanel.classList.remove('translate-x-full');
+        });
+        
+        // --- Auto-Speak Toggle ---
+        autoSpeakToggle.addEventListener('change', () => {
+            localStorage.setItem('autoSpeakEnabled', autoSpeakToggle.checked);
+        });
+
+        function loadAutoSpeakSetting() {
+            const autoSpeakEnabled = localStorage.getItem('autoSpeakEnabled') === 'true';
+            autoSpeakToggle.checked = autoSpeakEnabled;
+        }
+
+        // Initial Setup
+        populateDropdowns();
+        renderHistory();
+        loadAutoSpeakSetting();
+
+
+    </script>
+</body>
+</html>
+

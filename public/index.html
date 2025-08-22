@@ -210,7 +210,7 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
             
             try {
                 // Ab hum apne server ko call karenge, Google ko nahin
-                const response = await fetch('/translate', {
+                const response = await fetch('https://ai-translator-1-caok.onrender.com/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -332,4 +332,5 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
     </script>
 </body>
 </html>
+
 
